@@ -501,147 +501,217 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
   // --- Main Render ---
   return (
     <>
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.20))] md:h-[calc(100vh-theme(spacing.24))] mt-20 md:mt-24 bg-white dark:bg-dark-950 rounded-t-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-white/5 mx-auto max-w-5xl w-full relative">
-       
-       {/* Minimalist Header */}
-       <div className="h-20 shrink-0 border-b border-gray-100 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-dark-900 z-10">
-          <div className="flex items-center gap-4">
-             <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900/30 dark:to-secondary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400">
-                <GraduationCap size={24} />
-             </div>
-             <div>
-                <h1 className="font-bold text-lg text-gray-900 dark:text-white">مساعدك الدراسي الذكي</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">جاهز للمساعدة في {selectedCourse ? selectedCourse.title : 'دراستك'}</p>
-             </div>
-          </div>
-          <div className="flex items-center gap-2">
-             <button onClick={() => setMessages([])} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="مسح المحادثة">
-                <Eraser size={20} />
-             </button>
-             <button onClick={onBack} className="p-2 bg-gray-100 dark:bg-white/10 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors">
-                <XIcon size={20} />
-             </button>
-          </div>
-       </div>
+    {/* Full Page Layout */}
+    <div className="flex flex-col h-screen pt-16 md:pt-20 bg-gray-50 dark:bg-dark-950">
+        
+        {/* Quiz Modal */}
+        {activeQuiz && <QuizOverlay />}
 
-       {/* Chat Area */}
-       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar bg-gray-50/50 dark:bg-dark-950">
-          {messages.map((msg) => (
-             <motion.div 
-               initial={{ opacity: 0, y: 10 }}
-               animate={{ opacity: 1, y: 0 }}
-               key={msg.id} 
-               className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
-             >
-                <div className={`flex gap-4 max-w-[85%] md:max-w-[75%] ${msg.isBot ? 'flex-row' : 'flex-row-reverse'}`}>
-                   <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center border ${msg.isBot ? 'bg-white dark:bg-dark-800 border-gray-200 dark:border-white/10 text-primary-500' : 'bg-primary-600 text-white border-transparent'}`}>
-                      {msg.isBot ? <Sparkles size={18} /> : <User size={18} />}
-                   </div>
-                   
-                   <div className="space-y-2 w-full">
-                      {/* Attachments */}
-                      {msg.attachments && msg.attachments.length > 0 && (
-                         <div className="flex flex-wrap gap-2">
-                            {msg.attachments.map((att, i) => (
-                               att.type === 'image' ? (
-                                  <img key={i} src={att.url} className="h-32 rounded-xl border border-gray-200 dark:border-white/10" alt="attachment" />
-                               ) : (
-                                  <div key={i} className="flex items-center gap-2 p-2 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-white/10 text-xs">
-                                     <FileText size={14} /> {att.name}
-                                  </div>
-                               )
-                            ))}
-                         </div>
-                      )}
-                      
-                      {/* Text Bubble */}
-                      <div className={`p-5 rounded-2xl text-sm md:text-base leading-loose shadow-sm relative group ${msg.isBot ? 'bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-100 dark:border-white/5' : 'bg-primary-600 text-white rounded-tr-none'}`}>
-                         <div className="whitespace-pre-wrap">{msg.text}</div>
-                         
-                         {/* Interactive Widgets */}
-                         {msg.smartContent && msg.smartContent.type === 'FLASHCARDS' && (
-                             <FlashcardsWidget data={msg.smartContent.data as FlashcardsData} />
-                         )}
-                         {msg.smartContent && msg.smartContent.type === 'ROADMAP' && (
-                             <RoadmapWidget data={msg.smartContent.data as RoadmapData} />
-                         )}
-
-                         {msg.isBot && (
-                            <button onClick={() => speakText(msg.text, msg.id)} className={`absolute -left-8 top-2 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity ${speakingMessageId === msg.id ? 'text-red-500 opacity-100' : 'text-gray-400'}`}>
-                               {speakingMessageId === msg.id ? <StopCircle size={18} /> : <Volume2 size={18} />}
-                            </button>
-                         )}
-                      </div>
-                   </div>
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-dark-900 shrink-0 z-30">
+            <div className="flex items-center gap-3">
+                <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"><ArrowRight size={20} /></button>
+                <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-secondary-500 rounded-full flex items-center justify-center text-white shadow-md">
+                        <GraduationCap size={20} />
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-dark-900 rounded-full"></span>
                 </div>
-             </motion.div>
-          ))}
-          {isLoading && (
-             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white dark:bg-dark-800 flex items-center justify-center"><Loader2 size={18} className="animate-spin text-primary-500" /></div>
-                <div className="text-gray-400 text-sm">جاري التفكير...</div>
-             </div>
-          )}
-          <div ref={messagesEndRef} />
-       </div>
+                <div>
+                    <h2 className="font-bold text-gray-900 dark:text-white text-sm">المعلم الذكي</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs">{selectedCourse ? `يساعدك في ${selectedCourse.title}` : 'جاهز للمساعدة في دراستك'}</p>
+                </div>
+            </div>
+            
+            <button 
+                onClick={() => setMessages([])} 
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 rounded-full transition-colors text-gray-400"
+                title="مسح المحادثة"
+            >
+                <Eraser size={20} />
+            </button>
+        </div>
 
-       {/* Input Area */}
-       <div className="shrink-0 bg-white dark:bg-dark-900 p-4 border-t border-gray-100 dark:border-white/5 relative z-20">
-          {/* Quick Suggestions */}
-          {(!isLoading && (messages.length === 0 || messages[messages.length-1].isBot)) && (
-             <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-                {[
-                  { label: "📘 لخص الدرس", prompt: "لخص لي هذا الموضوع في شكل نقاط (Flashcards) بناءً على الملفات" },
-                  { label: "📝 اختبرني", prompt: "أنشئ لي اختبار قصير في هذا الموضوع من أسئلة المنهج" },
-                  { label: "💡 اشرح ببساطة", prompt: "اشرح لي هذا المفهوم كما ورد في الملفات ببساطة" },
-                  { label: "📊 خطة مذاكرة", prompt: "اقترح لي خطة مذاكرة (Roadmap) لهذا الموضوع" },
-                ].map((s, i) => (
-                   <button key={i} onClick={() => handleSend(s.prompt)} className="flex items-center gap-2 whitespace-nowrap px-4 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full text-sm text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 transition-all">
-                      <span>{s.label}</span>
-                   </button>
+        {/* Chat Body */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+            <div className="max-w-4xl mx-auto space-y-6 pb-4">
+                {messages.map((msg, idx) => (
+                    <motion.div 
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'} gap-3 items-end group`}
+                    >
+                        {msg.isBot && (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white shadow-sm shrink-0">
+                                <Bot size={16} />
+                            </div>
+                        )}
+                        
+                        <div className="flex flex-col gap-1 max-w-[85%] sm:max-w-[75%]">
+                            {/* Attachments Display in Message Bubble */}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-2 justify-end">
+                                    {msg.attachments.map((att, i) => (
+                                        att.type === 'image' ? (
+                                            <img key={i} src={att.url} alt="att" className="w-24 h-24 object-cover rounded-xl border border-gray-200 dark:border-white/10 shadow-sm" />
+                                        ) : (
+                                            <div key={i} className="flex items-center gap-2 bg-gray-100 dark:bg-white/10 p-2 rounded-lg text-xs">
+                                                <FileText size={14} /> {att.name}
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Text Message */}
+                            <div className={`p-4 rounded-2xl text-sm leading-7 shadow-sm whitespace-pre-wrap ${
+                                msg.isBot 
+                                ? 'bg-white dark:bg-dark-900 text-gray-800 dark:text-gray-100 rounded-tl-none border border-gray-200 dark:border-white/5' 
+                                : 'bg-primary-600 text-white rounded-tr-none'
+                            }`}>
+                                {msg.text}
+                                
+                                {/* Widgets */}
+                                {msg.smartContent && msg.smartContent.type === 'FLASHCARDS' && <FlashcardsWidget data={msg.smartContent.data as FlashcardsData} />}
+                                {msg.smartContent && msg.smartContent.type === 'ROADMAP' && <RoadmapWidget data={msg.smartContent.data as RoadmapData} />}
+                            </div>
+
+                            {/* Bot Actions */}
+                            {msg.isBot && (
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity px-2">
+                                    <button 
+                                        onClick={() => speakText(msg.text, msg.id)} 
+                                        className={`p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors ${speakingMessageId === msg.id ? 'text-primary-500' : 'text-gray-400'}`}
+                                    >
+                                        {speakingMessageId === msg.id ? <StopCircle size={16} /> : <Volume2 size={16} />}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {!msg.isBot && (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-300 shrink-0">
+                                <User size={16} />
+                            </div>
+                        )}
+                    </motion.div>
                 ))}
-             </div>
-          )}
+                {isLoading && (
+                    <div className="flex justify-start gap-3">
+                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white shadow-sm shrink-0">
+                            <Bot size={16} />
+                        </div>
+                        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl rounded-tl-none shadow-sm border border-gray-200 dark:border-white/5 flex items-center gap-2">
+                            <Loader2 size={18} className="animate-spin text-primary-500" />
+                            <span className="text-sm text-gray-500">جاري التفكير...</span>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+        </div>
 
-          {/* Attachments Preview */}
-          {attachments.length > 0 && (
-             <div className="flex gap-2 mb-3 overflow-x-auto">
-                {attachments.map((att, i) => (
-                   <div key={i} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden shrink-0">
-                      {att.mimeType.startsWith('image/') ? <img src={att.preview} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-gray-50"><FileText size={20} /></div>}
-                      <button onClick={() => handleRemoveAttachment(i)} className="absolute top-0 right-0 bg-red-500 text-white p-0.5"><XIcon size={12} /></button>
+        {/* Input Area */}
+        <div className="bg-white dark:bg-dark-900 border-t border-gray-200 dark:border-white/5 shrink-0 z-40 p-4">
+            <div className="max-w-4xl mx-auto space-y-3">
+                
+                {/* Quick Actions (only show if chat is empty or idle) */}
+                {messages.length < 3 && (
+                   <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                       {["📘 لخص الدرس", "📝 اختبرني", "💡 اشرح ببساطة", "📊 أنشئ خطة مذاكرة"].map((action, i) => (
+                           <button 
+                                key={i}
+                                onClick={() => handleSend(action)}
+                                className="whitespace-nowrap px-4 py-2 bg-gray-50 dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold border border-gray-200 dark:border-white/10 hover:border-primary-200 transition-colors"
+                           >
+                               {action}
+                           </button>
+                       ))}
                    </div>
-                ))}
-             </div>
-          )}
+                )}
 
-          <div className="flex items-end gap-2 bg-gray-50 dark:bg-dark-950 p-2 rounded-[2rem] border border-gray-200 dark:border-white/10 transition-all focus-within:ring-2 focus-within:ring-primary-500/20 shadow-sm">
-             <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,.pdf" />
-             <button onClick={() => fileInputRef.current?.click()} className={`p-3 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-white/10 ${attachments.length > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
-                <Paperclip size={20} />
-             </button>
-             
-             <textarea 
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder="اسألني عن أي شيء في المادة..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 dark:text-white placeholder:text-gray-400 resize-none max-h-32 py-3"
-                rows={1}
-             />
+                {/* Attachments Preview */}
+                <AnimatePresence>
+                    {attachments.length > 0 && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="flex gap-2 overflow-x-auto pb-2"
+                        >
+                            {attachments.map((att, idx) => (
+                                <div key={idx} className="relative w-16 h-16 shrink-0 group">
+                                    {att.mimeType.startsWith('image/') ? (
+                                        <img src={att.preview} alt="preview" className="w-full h-full object-cover rounded-xl border border-gray-200 dark:border-white/10" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-100 dark:bg-white/10 rounded-xl flex items-center justify-center text-gray-500">
+                                            <FileText size={24} />
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={() => handleRemoveAttachment(idx)}
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <XIcon size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-             <button onClick={toggleListening} className={`p-3 rounded-full transition-colors ${isListening ? 'bg-red-100 text-red-500 animate-pulse' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'}`}>
-                {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-             </button>
+                {/* Input Bar */}
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/20 rounded-[1.5rem] p-2 pr-4 ring-1 ring-transparent focus-within:ring-primary-500/30 transition-shadow">
+                    
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-gray-400 hover:text-primary-500 transition-colors p-2"
+                    >
+                        <Paperclip size={20} />
+                    </button>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileSelect} 
+                        multiple 
+                        accept="image/*,.pdf" 
+                        className="hidden" 
+                    />
 
-             <button onClick={() => handleSend()} disabled={isLoading || (!inputText.trim() && attachments.length === 0)} className="p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-primary-500/20">
-                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className={inputText.trim() ? "translate-x-0.5" : ""} />}
-             </button>
-          </div>
-       </div>
+                    <input
+                        type="text"
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                        placeholder="اطرح سؤالاً، اطلب تلخيصاً، أو أرفق صورة..."
+                        className="flex-1 bg-transparent border-none outline-none text-gray-800 dark:text-white placeholder:text-gray-400 text-sm h-10"
+                        disabled={isLoading}
+                    />
 
+                    <div className="flex items-center gap-1">
+                        <button 
+                            onClick={toggleListening}
+                            className={`p-3 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                        >
+                            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                        </button>
+                        
+                        <button 
+                            onClick={() => handleSend()}
+                            disabled={!inputText.trim() && attachments.length === 0}
+                            className="bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95 shadow-lg shadow-primary-500/20"
+                        >
+                            <Send size={20} className={inputText.trim() || attachments.length > 0 ? "translate-x-0.5" : ""} />
+                        </button>
+                    </div>
+                </div>
+                <div className="text-center">
+                   <p className="text-[10px] text-gray-400">الذكاء الاصطناعي قد يخطئ، يرجى مراجعة المعلومات المهمة.</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <QuizOverlay />
     </>
   );
 };
