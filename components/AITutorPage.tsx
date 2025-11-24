@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Zap, Trophy, ArrowRight, Eraser, Loader2, X as XIcon, RefreshCcw, ChevronLeft, Paperclip, FileText, Mic, MicOff, Volume2, StopCircle, GraduationCap, Check, CheckCircle2, XCircle, PlayCircle, Lightbulb, ListTodo, Calendar, ChevronRight } from 'lucide-react';
+import { Send, Bot, User, Zap, Trophy, ArrowRight, Eraser, Loader2, X as XIcon, ChevronLeft, Paperclip, FileText, Mic, MicOff, Volume2, StopCircle, GraduationCap, CheckCircle2, XCircle, Lightbulb, ListTodo, Calendar, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Chat } from "@google/genai";
-import { Course, ChatMessage, AttachmentItem, QuizData, SmartContent, FlashcardsData, RoadmapData } from '../types';
+import { Course, ChatMessage, QuizData, SmartContent, FlashcardsData, RoadmapData } from '../types';
 
 interface Props {
   onBack: () => void;
@@ -45,7 +45,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
       }
       setMessages([{ id: 'welcome', text: welcomeText, isBot: true }]);
     }
-  }, [selectedCourse, messages.length]);
+  }, [selectedCourse, messages.length, setMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,7 +57,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
 
   // --- Voice Logic ---
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = false;
@@ -90,16 +90,20 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
   };
 
   const speakText = (text: string, id: string) => {
-    if (!('speechSynthesis' in window)) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    
     if (speakingMessageId === id) {
         window.speechSynthesis.cancel();
         setSpeakingMessageId(null);
         return;
     }
+    
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ar-SA';
     utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+    
     setSpeakingMessageId(id);
     window.speechSynthesis.speak(utterance);
   };
@@ -108,7 +112,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
-    const newFiles = Array.from(e.target.files);
+    const newFiles = Array.from(e.target.files) as File[];
     const validAttachments: AttachmentState[] = [];
 
     for (const file of newFiles) {
@@ -318,7 +322,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
     }
   };
 
-  // --- Sub-Components for Smart Content ---
+  // --- Sub-Components ---
 
   const FlashcardsWidget = ({ data }: { data: FlashcardsData }) => {
       const [index, setIndex] = useState(0);
@@ -338,7 +342,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        className="absolute inset-0 bg-white dark:bg-black/20 rounded-xl p-6 flex flex-col items-center justify-center text-center border border-gray-100 dark:border-white/5 shadow-inner"
+                        className="absolute inset-0 bg-white dark:bg-black/20 rounded-xl p-6 flex flex-col items-center justify-center text-center border border-gray-100 dark:border-white/5 shadow-inner overflow-y-auto"
                      >
                          <h4 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">{data.cards[index].title}</h4>
                          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{data.cards[index].content}</p>
@@ -381,7 +385,7 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
       )
   };
 
-  // --- Quiz Overlay Component ---
+  // --- Quiz Component (Refactored) ---
   const QuizOverlay = () => {
     if (!activeQuiz) return null;
     
@@ -421,7 +425,12 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-gray-50 dark:bg-dark-950 flex flex-col animate-in fade-in duration-300">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-gray-50 dark:bg-dark-950 flex flex-col"
+        >
             {/* Header */}
             <div className="h-16 flex items-center justify-between px-6 bg-white dark:bg-dark-900 border-b border-gray-100 dark:border-white/5">
                 <button onClick={closeQuiz} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"><XIcon /></button>
@@ -434,67 +443,80 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
             </div>
 
             <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
-                {showResult ? (
-                    <div className="text-center max-w-md w-full animate-in zoom-in duration-500">
-                        <div className="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-500">
-                            <Trophy size={48} />
-                        </div>
-                        <h2 className="text-3xl font-black mb-2 dark:text-white">ممتاز!</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mb-8">لقد أجبت على {score} من {activeQuiz.questions.length} أسئلة بشكل صحيح.</p>
-                        <button onClick={closeQuiz} className="w-full bg-primary-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:scale-105 transition-transform">إنهاء الاختبار</button>
-                    </div>
-                ) : (
-                    <div className="max-w-xl w-full">
-                        <span className="text-xs font-bold text-primary-500 tracking-widest uppercase mb-2 block">سؤال {currentIdx + 1}</span>
-                        <h2 className="text-2xl md:text-3xl font-bold mb-8 dark:text-white leading-tight">{question.question}</h2>
-
-                        <div className={`grid gap-4 ${isTrueFalse ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                            {question.options.map((opt, idx) => {
-                                let stateStyle = "border-gray-200 dark:border-white/10 bg-white dark:bg-dark-800 hover:border-primary-400";
-                                let icon = null;
-
-                                if (checked) {
-                                    if (idx === question.correctIndex) {
-                                        stateStyle = "border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500";
-                                        icon = <CheckCircle2 className="text-green-500" />;
-                                    } else if (idx === selectedOpt) {
-                                        stateStyle = "border-red-500 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500";
-                                        icon = <XCircle className="text-red-500" />;
-                                    } else {
-                                        stateStyle = "opacity-50 border-gray-200 dark:border-white/5";
-                                    }
-                                }
-
-                                return (
-                                    <button 
-                                        key={idx} 
-                                        onClick={() => handleAnswer(idx)}
-                                        disabled={checked}
-                                        className={`relative p-6 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between group ${stateStyle} ${isTrueFalse ? 'aspect-square flex-col justify-center text-center gap-4' : ''}`}
-                                    >
-                                        <span className={`font-bold ${isTrueFalse ? 'text-xl' : 'text-lg'} ${checked ? '' : 'group-hover:text-primary-600'} dark:text-white`}>{opt}</span>
-                                        {icon}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {checked && (
-                            <div className="mt-8 animate-in slide-in-from-bottom-4 fade-in duration-300">
-                                <div className={`p-4 rounded-xl mb-4 text-sm ${selectedOpt === question.correctIndex ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200' : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200'}`}>
-                                    <span className="font-bold block mb-1">{selectedOpt === question.correctIndex ? 'إجابة صحيحة!' : 'إجابة خاطئة'}</span>
-                                    {question.explanation}
-                                </div>
-                                <button onClick={next} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
-                                    <span>السؤال التالي</span>
-                                    <ArrowRight size={18} />
-                                </button>
+                <AnimatePresence mode='wait'>
+                    {showResult ? (
+                        <motion.div 
+                            key="result"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="text-center max-w-md w-full"
+                        >
+                            <div className="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-500">
+                                <Trophy size={48} />
                             </div>
-                        )}
-                    </div>
-                )}
+                            <h2 className="text-3xl font-black mb-2 dark:text-white">ممتاز!</h2>
+                            <p className="text-gray-500 dark:text-gray-400 mb-8">لقد أجبت على {score} من {activeQuiz.questions.length} أسئلة بشكل صحيح.</p>
+                            <button onClick={closeQuiz} className="w-full bg-primary-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:scale-105 transition-transform">إنهاء الاختبار</button>
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key={currentIdx}
+                            initial={{ x: 50, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -50, opacity: 0 }}
+                            className="max-w-xl w-full"
+                        >
+                            <span className="text-xs font-bold text-primary-500 tracking-widest uppercase mb-2 block">سؤال {currentIdx + 1}</span>
+                            <h2 className="text-2xl md:text-3xl font-bold mb-8 dark:text-white leading-tight">{question.question}</h2>
+
+                            <div className={`grid gap-4 ${isTrueFalse ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                {question.options.map((opt, idx) => {
+                                    let stateStyle = "border-gray-200 dark:border-white/10 bg-white dark:bg-dark-800 hover:border-primary-400";
+                                    let icon = null;
+
+                                    if (checked) {
+                                        if (idx === question.correctIndex) {
+                                            stateStyle = "border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500";
+                                            icon = <CheckCircle2 className="text-green-500" />;
+                                        } else if (idx === selectedOpt) {
+                                            stateStyle = "border-red-500 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500";
+                                            icon = <XCircle className="text-red-500" />;
+                                        } else {
+                                            stateStyle = "opacity-50 border-gray-200 dark:border-white/5";
+                                        }
+                                    }
+
+                                    return (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => handleAnswer(idx)}
+                                            disabled={checked}
+                                            className={`relative p-6 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between group ${stateStyle} ${isTrueFalse ? 'aspect-square flex-col justify-center text-center gap-4' : ''}`}
+                                        >
+                                            <span className={`font-bold ${isTrueFalse ? 'text-xl' : 'text-lg'} ${checked ? '' : 'group-hover:text-primary-600'} dark:text-white`}>{opt}</span>
+                                            {icon}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {checked && (
+                                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8">
+                                    <div className={`p-4 rounded-xl mb-4 text-sm ${selectedOpt === question.correctIndex ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200' : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200'}`}>
+                                        <span className="font-bold block mb-1">{selectedOpt === question.correctIndex ? 'إجابة صحيحة!' : 'إجابة خاطئة'}</span>
+                                        {question.explanation}
+                                    </div>
+                                    <button onClick={next} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
+                                        <span>السؤال التالي</span>
+                                        <ArrowRight size={18} />
+                                    </button>
+                                </motion.div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     );
   };
 
@@ -505,7 +527,9 @@ export const AITutorPage: React.FC<Props> = ({ onBack, messages, setMessages, se
     <div className="flex flex-col h-screen pt-16 md:pt-20 bg-gray-50 dark:bg-dark-950">
         
         {/* Quiz Modal */}
-        {activeQuiz && <QuizOverlay />}
+        <AnimatePresence>
+            {activeQuiz && <QuizOverlay />}
+        </AnimatePresence>
 
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-dark-900 shrink-0 z-30">
