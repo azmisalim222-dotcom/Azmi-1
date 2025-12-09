@@ -1,10 +1,9 @@
-// Fix: explicit typing for props and state to resolve TS errors
 import React, { Component, ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -13,10 +12,7 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+  public state: ErrorBoundaryState = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -43,12 +39,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '10px' }}>عذراً، حدث خطأ غير متوقع</h2>
           <p style={{ color: '#4b5563', marginBottom: '20px' }}>يرجى تحديث الصفحة للمحاولة مرة أخرى.</p>
-          <details style={{ marginTop: '10px', padding: '10px', background: '#e5e7eb', borderRadius: '8px', textAlign: 'left', maxWidth: '600px', overflow: 'auto' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>تفاصيل الخطأ (للمطورين)</summary>
-            <pre style={{ marginTop: '10px', fontSize: '0.8rem', color: '#dc2626' }}>
-              {this.state.error?.toString()}
-            </pre>
-          </details>
           <button 
             onClick={() => window.location.reload()}
             style={{
