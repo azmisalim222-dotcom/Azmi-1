@@ -1,5 +1,7 @@
 {
-  "name": "Copy of معهد عزمي للتعليم",
+  "name": "azmi platform",
   "description": "معهد تعليمي ذكي لطلاب الجامعة يعتمد على الذكاء الاصطناعي لتسهيل تسجيل المواد ومتابعة الدروس.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

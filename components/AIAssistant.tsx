@@ -51,7 +51,8 @@ export const AIAssistant = () => {
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
         chatRef.current = ai.chats.create({
-          model: 'gemini-2.5-flash',
+          // Use Flash-Lite for low-latency (fast) responses as requested
+          model: 'gemini-2.5-flash-lite-latest',
           config: {
             systemInstruction: `✅ **مساعد عزمي الشخصي (نسخة الويدجت)**
 
@@ -111,7 +112,7 @@ ${courseContext}
                 </div>
                 <div>
                   <h3 className="font-bold text-white dark:text-black text-sm">مساعد عزمي</h3>
-                  <p className="text-gray-400 dark:text-gray-600 text-xs">متصل لخدمتك</p>
+                  <p className="text-gray-400 dark:text-gray-600 text-xs">متصل لخدمتك (Flash Lite)</p>
                 </div>
               </div>
               <button 

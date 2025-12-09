@@ -49,7 +49,8 @@ function App() {
   const handleCourseClick = (course: Course) => {
     setSelectedCourse(course);
     setView('DETAILS');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Force scroll to top instantly
+    setTimeout(() => window.scrollTo(0, 0), 0);
   };
 
   const handleCategorySelect = (cat: Category | 'ALL') => {

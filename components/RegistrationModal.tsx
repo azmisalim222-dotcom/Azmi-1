@@ -69,12 +69,26 @@ export const RegistrationModal: React.FC<Props> = ({ course: initialCourse, onCl
     // Mock API for coupon validation
     setTimeout(() => {
       const code = couponCode.toUpperCase();
-      if (code === 'AZMI20') {
+      const now = new Date();
+
+      // منطق كود سنة 2026: يبدأ 1 يناير وينتهي 1 فبراير (شهر واحد)
+      const startDate2026 = new Date('2026-01-01T00:00:00');
+      const endDate2026 = new Date('2026-02-01T00:00:00');
+
+      if (code === 'AZMI2026') {
+        if (now >= startDate2026 && now < endDate2026) {
+          setAppliedCoupon({ code: 'AZMI2026', percent: 30 }); // خصم خاص 30%
+          setCouponError('');
+        } else if (now < startDate2026) {
+          setCouponError('عذراً، هذا الكود يبدأ العمل في 1 يناير 2026.');
+        } else {
+          setCouponError('عذراً، انتهت صلاحية هذا الكود (كان متاحاً لشهر يناير 2026 فقط).');
+        }
+      } 
+      // الكود الحالي (للتجربة الآن)
+      else if (code === 'AZMI20') {
         setAppliedCoupon({ code: 'AZMI20', percent: 20 });
         setCouponError('');
-      } else if (code === 'STUDENT') {
-         setAppliedCoupon({ code: 'STUDENT', percent: 10 });
-         setCouponError('');
       } else {
         setAppliedCoupon(null);
         setCouponError('الكود غير صحيح أو منتهي الصلاحية');
