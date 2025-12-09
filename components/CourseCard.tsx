@@ -1,6 +1,6 @@
 import React from 'react';
 import { Course } from '../types';
-import { ArrowLeft, Cpu, Code2, Pi, Activity, Radio, AppWindow, Globe } from 'lucide-react';
+import { ArrowLeft, Cpu, Code2, Calculator, Activity, Radio, AppWindow, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Props {
@@ -14,7 +14,7 @@ const getIconForCourse = (course: Course) => {
   
   // Updated to brighter, more modern colors matching the Violet/Cyan theme
   if (title.includes('math') || title.includes('calc') || title.includes('prob') || title.includes('discrete')) {
-    return <Pi size={24} className="text-secondary-500" />;
+    return <Calculator size={24} className="text-secondary-500" />;
   }
   if (title.includes('prog') || title.includes('soft') || title.includes('hci')) {
     return <Code2 size={24} className="text-primary-500" />;
